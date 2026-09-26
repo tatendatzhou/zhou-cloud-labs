@@ -5,8 +5,10 @@
 # ============================================================
 
 #Password Profile
+$TempPassword = "P@ssword" + (Get-Random -Minimum 100000 -Maximum 999999)
+
 $PasswordProfile = @{
-    Password                      = ''
+    Password                      = $TempPassword
     ForceChangePasswordNextSignIn = $true
 }
 #User parameters
