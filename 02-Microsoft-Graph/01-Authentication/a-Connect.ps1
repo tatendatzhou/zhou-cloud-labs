@@ -12,5 +12,24 @@
 # ============================================================
 #
 #Connect to Microsoft Graph
-Connect-MgGraph `
--Scopes User.ReadWrite.All, Group.ReadWrite.All
+
+Function Connect-MyGraph {
+    param(
+        [parameter(Mandatory = $true)]
+        [string]$TenantId,
+
+        [parameter(Mandatory = $true)]
+        [string[]]$Scopes
+    )
+
+    try{
+        Write-Host "Connecting to my tenant" -ForegroundColor Cyan
+        Connect-MgGraph -TenantId $TenantId -Scopes $Scopes -NoWelcome -ErrorAction Stop
+        Write-Host "Successfully connected to" (Get-MgContext).Account -ForegroundColor Green
+    }Catch{
+        Write-Host "Failed to connect" -ForegroundColor DarkRed
+        Write-Host $_.Exception.Message -ForegroundColor Red
+    }
+}
+
+Connect-MyGraph
