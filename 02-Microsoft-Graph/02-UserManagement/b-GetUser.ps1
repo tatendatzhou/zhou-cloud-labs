@@ -9,48 +9,54 @@
 # Author      : Tatenda Zhou
 # ============================================================
 
-#Scenario 1. Retrieve All Users
-Get-MgUser -All
+## Script 1 — Get-LxUser
 
+function Get-LxUser{
+    [cmdletbinding()]
+    param(
+        [parameter(Mandatory = $true)][string]$Department
+    )
 
-#Scenario 2. Retrieve only first 5 Users
-Get-MgUser -Top 5
+#_____________________________________________________________________________________#
+###Function Variables
+$Scopes = @("User.Read.All")
+$Properties = @("DisplayName", "Id", "UserPrincipalName", "Department")
+#______________________________________________________________________________________#
+###Connection
+try{
+    if(-not(Get-MgContext)){
+        Write-Host "Connecting to Graph..." -ForegroundColor Cyan
+        Connect-MgGraph -Scopes $Scopes -NoWelcome -ErrorAction Stop
+        Write-Host "Connected to: $((Get-MgOrganization).DisplayName)" -ForegroundColor Green
+    }else{
+        Write-Host "You are already connected as: $((Get-MgContext).Account)" -ForegroundColor Green
+    }
+}Catch{
+    Write-Error "Failed to connect to Graph because: $($_.Exception.Message)"
+    return
+}
+#________________________________________________________________________________________#
+###Getting Users for a specific department
+try{
+    Write-Host "Fetching deparment users" -ForegroundColor Cyan
+    $DepartmentUsers = Get-MgUser -All -Property $Properties  -Filter "Department eq '$Department'" -ErrorAction Stop
 
+    Write-Output "We have found $($DepartmentUsers.Count) user/s in the tenant in the department $Department"
 
-#Scenario 3. Retrieve a single user using their User Principal Name (UPN).
-Get-MgUser -UserId 'francis@loxovea.com'
+    $results = foreach($User in $DepartmentUsers){
+        [PsCustomObject]@{
+        DisplayName =  $User.DisplayName
+        UserPrincipalName = $User.UserPrincipalName
+        UserId = $User.Id
+        Department = $User.Department
+    }
+    }
+    $results
 
+}Catch{
+    Write-Error "Failed to get users because $($_.Exception.Message)"
+    return
+}
+}
 
-#Scenario 4. Retrieve all users in the IT Support department.
-Get-MgUser -Filter "Department eq 'It Support'" ` -Property DisplayName, UserPrincipalName, Department |
- Select-Object DisplayName, UserPrincipalName, Department
-
-
-#Scenario 5. Retrieve all users and display only: DisplayName & UserPrincipalName & Department
-Get-MgUser -All -Property DisplayName, UserPrincipalName, Department |
- Select-Object DisplayName, UserPrincipalName, Department | Format-Table -AutoSize
-
-# Scenario 6: Retrieve all disabled user accounts
-$Props = 'DisplayName', 'UserPrincipalName', 'AccountEnabled'
-Get-MgUser -All -Property $Props | Where-Object {$_.AccountEnabled -eq $false} |
-Select-Object $Props
-
-# Scenario 7: Retrieve all Guest users
-$Props = 'DisplayName', 'UserPrincipalName', 'UserType'
-Get-MgUser -All -Property $Props -Filter "UserType eq 'Guest'" |
-Select-Object $Props
-
-
-# Scenario 8: Retrieve users whose DisplayName starts with 'Fran'
-$Props = 'DisplayName', 'UserPrincipalName'
-Get-MgUser -All -Property $Props -Filter "startswith(DisplayName,'T')" |
-Select-Object $Props
-
-
-# Scenario 9: Retrieve users who do not have a JobTitle assigned
-$Props = 'DisplayName', 'JobTitle'
-Get-MgUser -Property $prop | Where-Object {$_.JobTitle -eq $null} | Select-Object $Props
-
-# Scenario 10: Retrieve users created on or after January 1, 2026
-$Props = 'DisplayName', 'UserPrincipalName', 'createdDateTime'
-Get-MgUser -Filter "createdDateTime ge 2026-09-24T00:04:00z" -Property $Props | Select-Object $Props
+Get-LxUser -Department "Sales Department"
