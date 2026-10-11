@@ -11,4 +11,5 @@
 #Verify Connection
 Get-MgContext |
 Select-Object Account,Scopes,AuthType |
-Format-Table -AutoSize
+Format-List 
+commend-help

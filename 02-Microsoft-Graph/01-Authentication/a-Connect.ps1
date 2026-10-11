@@ -13,23 +13,16 @@
 #
 #Connect to Microsoft Graph
 
-Function Connect-MyGraph {
-    param(
-        [parameter(Mandatory = $true)]
-        [string]$TenantId,
-
-        [parameter(Mandatory = $true)]
-        [string[]]$Scopes
-    )
-
-    try{
-        Write-Host "Connecting to my tenant" -ForegroundColor Cyan
-        Connect-MgGraph -TenantId $TenantId -Scopes $Scopes -NoWelcome -ErrorAction Stop
-        Write-Host "Successfully connected to" (Get-MgContext).Account -ForegroundColor Green
-    }Catch{
-        Write-Host "Failed to connect" -ForegroundColor DarkRed
-        Write-Host $_.Exception.Message -ForegroundColor Red
+$Scopes = @("User.ReadWrite.All", "Group.Read.All")
+try{
+    if(-not(Get-MgContext)){
+        Write-Host "Connecting to Graph..." -ForegroundColor Cyan
+        Connect-MgGraph -Scopes $Scopes -ErrorAction Stop
+        Write-Host "Successfully connected to organization: $((Get-MgOrganization).DisplayName)" -ForegroundColor Green
+    }Else{
+        Write-Host "You are already connected as $((Get-MgContext).account)" -ForegroundColor Green
     }
+}Catch{
+    Write-Error "Failed to connect to you organization because: $($_.Exception.Message)"
+    return 
 }
-
-Connect-MyGraph
